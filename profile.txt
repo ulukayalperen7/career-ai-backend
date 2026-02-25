@@ -1,26 +1,26 @@
 Name: Alperen Ulukaya
 Role: Full-Stack Software Engineer & AI Agent Architect
 
-Academic Background & Discipline: 
-- 3rd-year Computer Engineering student at Akdeniz University (Antalya, Turkey).
-- English Level: B2 (Professional Working Proficiency).
-- Highly disciplined individual, maintaining a strict physical routine (fitness, basketball, swimming) that fuels mental endurance and focus.
+Public summary:
+- 3rd-year Computer Engineering student. Focused on backend architecture, clean code, scalability, and agentic AI engineering.
+- English: B2 (Professional Working Proficiency).
 
-Technical Arsenal & Engineering Mindset:
-- Backend & Architecture: Java (Spring Boot), C# (.NET), Python (FastAPI). Focused on clean code, scalability, distributed systems, and best practices rather than just "making it work".
-- Frontend Technologies: Angular, JavaScript/TypeScript, HTML/CSS.
-- Artificial Intelligence: Architecting Agentic AI systems, LLM integrations (Gemini/OpenAI), Tool Calling, Prompt Engineering, and RAG. Not just consuming APIs, but engineering the underlying AI systems.
-- Development Tools & DevOps: Git, GitHub Pro, Azure DevOps, VS Code, Postman.
+Technical highlights:
+- Backend: Java (Spring Boot), C# (.NET), Python (FastAPI).
+- Frontend: Angular, TypeScript/JavaScript.
+- AI: LLM integrations, tool-calling, prompt engineering, RAG, agentic systems.
 
-Professional Experience & Vision:
-- Software Engineer Intern at Talya Bilişim: Successfully developed the backend architecture for an AI-based application.
-- Career Vision: Actively seeking a long-term internship or role where he can contribute to product-oriented, globally scalable projects, rather than just fulfilling academic requirements.
+Public projects (short):
+- AntAPP: AI-supported city guide (team project).
+- Career Assistant AI Agent: website-integrated assistant with critic and notification features.
 
-Current Projects & Programs:
-- Defense Industry 401 Education Program (Savunma Sanayii 401 Eğitim Programı): Active participant as of February 2026, validating his technical foundation in the sector.
-- "AntAPP": A collaborative, AI-supported city guide application for Antalya, demonstrating strong teamwork and DevOps practices.
-- Career Assistant AI Agent: An advanced agentic system featuring self-evaluating AI (Critic Agent) and real-time mobile notifications.
-- Academic Goals: Planning a final-year graduation project aimed at securing a TÜBİTAK (Scientific and Technological Research Council of Türkiye) grant.
+Sensitive / INTERNAL (do NOT disclose without explicit consent and contact details):
+- Defense-related training/programs (e.g., Savunma Sanayii 401) — INTERNAL ONLY
+- Employer-internal project details and confidential internship specifics — INTERNAL ONLY
 
-Volunteering & Community:
-- ANTÇEV (Antalya Çağdaş Eğitim ve Kültür Vakfı): Volunteer computer educator, teaching technology skills to children.
+Volunteering:
+- Volunteer computer educator at a local foundation.
+
+Notes for assistant:
+- By default, provide only short summaries and ask clarifying questions before sharing more.
+- If a user explicitly requests detailed or sensitive information, ask for Name, Surname, and Email and confirmation of purpose before revealing.
