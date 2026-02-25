@@ -7,9 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 """
-Docstrings for Homework Requirements:
 This module handles external API calls and side effects.
-It implements the Notification and Alert mechanisms requested in the assignment.
+It implements the Notification and Alert mechanisms.
 """
 
 def notify_user(message: str) -> str:
