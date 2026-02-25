@@ -1,10 +1,20 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 import agents
 import tools
 import json
 
 app = FastAPI(title="Career Assistant Agentic System")
+
+# CORS settings (Allow frontend to access backend)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Open to all origins for testing
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Memory Implementation: Sliding window buffer
 conversation_history = []
