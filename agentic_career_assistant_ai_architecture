@@ -1,0 +1,42 @@
+digraph "Agentic Career Assistant AI Architecture" {
+	graph [fontcolor="#2D3436" fontname="Sans-Serif" fontsize=15 label="Agentic Career Assistant AI Architecture" nodesep=0.60 pad=2.0 rankdir=LR ranksep=0.75 splines=ortho]
+	node [fixedsize=true fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 height=1.4 imagescale=true labelloc=b shape=box style=rounded width=1.4]
+	edge [color="#7B8894"]
+	c5b6dc1674124d088b2bfea73828f962 [label=Recruiter height=1.9 image="C:\Program Files\Python313\Lib\site-packages\resources/onprem/client\user.png" shape=none]
+	b3e0e4980834459795d048dacc117991 -> "7be61a27e4454c68afed269a0d94e07f" [label=Draft dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"7be61a27e4454c68afed269a0d94e07f" -> b3e0e4980834459795d048dacc117991 [label="Score < 8
+Feedback" dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	subgraph "cluster_FastAPI Backend (main.py)" {
+		graph [bgcolor="#E5F5FD" fontname="Sans-Serif" fontsize=12 label="FastAPI Backend (main.py)" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded]
+		"6551d16f6aee4cdd8dbeff7af4b5eb5e" [label="POST /chat" height=1.9 image="C:\Program Files\Python313\Lib\site-packages\resources/programming/language\python.png" shape=none]
+		"501d88f08c0d484ca9e1cc1a78fe86ab" [label="Sliding Window Memory" height=1.9 image="C:\Program Files\Python313\Lib\site-packages\resources/generic/database\sql.png" shape=none]
+		subgraph "cluster_Agent Loop" {
+			graph [bgcolor="#EBF3E7" fontname="Sans-Serif" fontsize=12 label="Agent Loop" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded]
+			b3e0e4980834459795d048dacc117991 [label="Primary Agent
+(Drafts Response)" height=2.3 image="C:\Program Files\Python313\Lib\site-packages\resources/programming/language\python.png" shape=none]
+			"7be61a27e4454c68afed269a0d94e07f" [label="Critic Agent
+(Evaluates Draft)" height=2.3 image="C:\Program Files\Python313\Lib\site-packages\resources/programming/language\python.png" shape=none]
+		}
+	}
+	subgraph "cluster_External Tools (tools.py)" {
+		graph [bgcolor="#E5F5FD" fontname="Sans-Serif" fontsize=12 label="External Tools (tools.py)" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded]
+		a707c43f7fe94feb9abbdb60d527d2de [label="Pushover API
+(Notifications)" height=2.3 image="C:\Program Files\Python313\Lib\site-packages\resources/onprem/network\internet.png" shape=none]
+		"5249675a507e4db6b3fd608d95f02428" [label="Alperen
+(Manual Intervention)" height=2.3 image="C:\Program Files\Python313\Lib\site-packages\resources/onprem/client\user.png" shape=none]
+	}
+	subgraph "cluster_Knowledge Base" {
+		graph [bgcolor="#E5F5FD" fontname="Sans-Serif" fontsize=12 label="Knowledge Base" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded]
+		ee8664055a1345dd956075ba2c0ea436 [label="profile.txt
+(CV Context)" height=2.3 image="C:\Program Files\Python313\Lib\site-packages\resources/programming/language\python.png" shape=none]
+	}
+	c5b6dc1674124d088b2bfea73828f962 -> "6551d16f6aee4cdd8dbeff7af4b5eb5e" [label=Message dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"6551d16f6aee4cdd8dbeff7af4b5eb5e" -> "501d88f08c0d484ca9e1cc1a78fe86ab" [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"6551d16f6aee4cdd8dbeff7af4b5eb5e" -> b3e0e4980834459795d048dacc117991 [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	ee8664055a1345dd956075ba2c0ea436 -> b3e0e4980834459795d048dacc117991 [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"7be61a27e4454c68afed269a0d94e07f" -> "6551d16f6aee4cdd8dbeff7af4b5eb5e" [label="Score >= 8" dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"6551d16f6aee4cdd8dbeff7af4b5eb5e" -> c5b6dc1674124d088b2bfea73828f962 [label="Final Response" dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"6551d16f6aee4cdd8dbeff7af4b5eb5e" -> a707c43f7fe94feb9abbdb60d527d2de [label="Notify New Message / Response" dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	b3e0e4980834459795d048dacc117991 -> "5249675a507e4db6b3fd608d95f02428" [label="[NEEDS_HUMAN]" dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"5249675a507e4db6b3fd608d95f02428" -> a707c43f7fe94feb9abbdb60d527d2de [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+}

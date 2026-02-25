@@ -15,7 +15,6 @@ It implements the Notification and Alert mechanisms requested in the assignment.
 def notify_user(message: str) -> str:
     """
     Sends a real push notification to Alperen via Pushover API.
-    [Hoca Requirement: Mobile Notification Tool]
     """
     # Fetching credentials from .env for security
     user_key = os.getenv("PUSHOVER_USER")
@@ -46,7 +45,6 @@ def notify_user(message: str) -> str:
 def record_unknown_question(question: str) -> str:
     """
     Logs complex questions and alerts Alperen for manual intervention.
-    [Hoca Requirement: Unknown Question Detection Tool]
     """
     alert_msg = f"⚠️ ACTION REQUIRED: I encountered a question I couldn't answer: '{question}'"
     

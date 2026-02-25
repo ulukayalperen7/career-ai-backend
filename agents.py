@@ -5,12 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-"""
-Docstrings for Homework Requirements:
-This module defines the Primary Career Agent and the Critic Agent.
-It handles the prompt engineering and the decision-making logic.
-[Hoca Requirement: Primary Agent & Response Evaluator]
-"""
 
 # 1. Initialize the client
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -34,17 +28,24 @@ def get_primary_response(user_message: str, history: list = None):
     Instructions:
     - Use a professional, concise, and polite tone.
     - If you are asked about salary, legal matters, or topics not in the profile, 
-      you MUST signal that you need human intervention.
+      you MUST reply EXACTLY with the phrase: [NEEDS_HUMAN]
     - For technical questions, answer based on Alperen's tech stack (Spring Boot, .NET, Angular, etc.).
     """
     
+    # Memory Implementation: Include history if provided
+    chat_context = ""
+    if history:
+        chat_context = "Previous Conversation:\n" + "\n".join(history) + "\n\n"
+        
+    full_message = chat_context + "Current Message: " + user_message
+    
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-3-flash-preview",
         config=types.GenerateContentConfig(
             system_instruction=system_instruction,
             temperature=0.7
         ),
-        contents=user_message
+        contents=full_message
     )
     return response.text
 
@@ -62,12 +63,15 @@ def evaluate_response(original_query: str, proposed_response: str):
     Original Recruiter Query: {original_query}
     Proposed Response: {proposed_response}
     
-    Return your evaluation in JSON format with 'score' (average) and 'feedback'.
+    Return your evaluation in JSON format with exactly two keys: 'score' (integer average) and 'feedback' (string).
     """
     
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        config=types.GenerateContentConfig(temperature=0.1), # Low temp for strict evaluation
+        model="gemini-3-flash-preview",
+        config=types.GenerateContentConfig(
+            temperature=0.1, # Low temp for strict evaluation
+            response_mime_type="application/json" # Enforce JSON output to prevent 500 errors
+        ),
         contents=eval_prompt
     )
     return response.text

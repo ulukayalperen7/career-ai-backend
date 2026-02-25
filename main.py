@@ -1,60 +1,101 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import os
-from google import genai
-from google.genai import types
-from dotenv import load_dotenv
+import agents
+import tools
+import json
 
-# 1. Load the environment variables from the .env file
-load_dotenv()
+app = FastAPI(title="Career Assistant Agentic System")
 
-# 2. Initialize the NEW Gemini client
-# It automatically detects and uses the GEMINI_API_KEY from your .env file
-client = genai.Client()
+# Memory Implementation: Sliding window buffer
+conversation_history = []
+MAX_HISTORY = 5
 
-# 3. Initialize the FastAPI application
-app = FastAPI(title="Career AI Assistant Backend")
-
-# 4. Define the data structure for incoming user messages
 class ChatRequest(BaseModel):
     message: str
 
-# 5. The Core Persona (System Prompt)
-# This dictates how the AI behaves and what it knows about you
-SYSTEM_PROMPT = """You are the official Career Assistant AI for Alperen Ulukaya.
-Your job is to communicate with potential employers on his behalf.
-You must maintain a highly professional, concise, and polite tone at all times.
 
-Here is Alperen's professional background:
-- 3rd-year Computer Engineering student at Akdeniz University in Antalya.
-- Full-Stack Developer and AI Enthusiast.
-- Core Tech Stack: Python, Spring Boot, Angular, .NET.
-- Experience: Developed the backend architecture for an AI-based application during his internship at Talya Bilişim.
-- Current Engagements: Participant in the prestigious Defense Industry 401 Education Program.
-- Volunteering: Computer educator for children at ANTÇEV.
-
-Interaction Rules:
-- Answer interview invitations enthusiastically and professionally.
-- Respond to technical questions accurately using his core tech stack.
-- If asked about a topic outside this scope (e.g., specific salary expectations, deep legal questions, or tools he doesn't know), politely state that you do not have that specific information and will note it down for Alperen.
-"""
-
-# 6. Health check endpoint
-@app.get("/")
-def read_root():
-    return {"status": "Backend is running flawlessly with the NEW google-genai SDK!"}
-
-# 7. The main chat endpoint
 @app.post("/chat")
-def chat_with_agent(request: ChatRequest):
-    # We call the new Gemini 2.5 Flash model and inject the System Prompt
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=request.message,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT,
-            temperature=0.3, # Low temperature keeps the AI professional and focused
-        )
-    )
+def run_agent_system(request: ChatRequest):
+    global conversation_history
+    user_query = request.message
     
-    return {"response": response.text}
+    # [Step 1: Notify that a new message arrived]
+    tools.notify_user(f"New recruiter message: {user_query}")
+    
+    done = False
+    attempts = 0
+    max_attempts = 3
+    final_response = ""
+    evaluation_log = []
+    
+    # Keep original query for evaluation
+    original_query = user_query
+
+    while not done and attempts < max_attempts:
+        attempts += 1
+        
+        try:
+            # 1. Primary Agent generates a draft
+            draft = agents.get_primary_response(user_query, history=conversation_history)
+            
+            # Check if human intervention is requested
+            if "[NEEDS_HUMAN]" in draft:
+                tools.record_unknown_question(original_query)
+                final_response = "I have noted your inquiry and Alperen will get back to you personally regarding this matter."
+                done = True
+                break
+                
+            # 2. Critic Agent evaluates the draft
+            evaluation_raw = agents.evaluate_response(original_query, draft)
+            
+            try:
+                # Cleaning the LLM output to get valid JSON
+                eval_clean = evaluation_raw.replace("```json", "").replace("```", "").strip()
+                evaluation = json.loads(eval_clean)
+            except Exception as e:
+                print(f"JSON Parse Error: {e}, Raw: {evaluation_raw}")
+                evaluation = {"score": 5, "feedback": "Failed to parse evaluation, retrying."}
+
+            evaluation_log.append(evaluation)
+            
+            if evaluation.get("score", 0) >= 8:
+                final_response = draft
+                done = True
+            else:
+                # If score is low, the loop continues for another attempt
+                user_query = f"{original_query} (Correction: {evaluation.get('feedback')})"
+                
+        except Exception as e:
+            print(f"API Error: {e}")
+            # Handle rate limits or other API errors gracefully
+            if "429" in str(e) or "quota" in str(e).lower():
+                final_response = "I am currently experiencing high traffic. Please try again in a few minutes."
+            elif "503" in str(e) or "unavailable" in str(e).lower():
+                final_response = "The AI model is currently experiencing high demand. Please try again in a few moments."
+            else:
+                final_response = "An unexpected error occurred while processing your request."
+            
+            evaluation_log.append({"error": str(e)})
+            done = True
+            break
+
+    # [Step 3: Check for Unknown Questions / Thresholds]
+    # If after max attempts we still fail, or it's a risky topic
+    if not done and not final_response:
+        tools.record_unknown_question(original_query)
+        final_response = "I have noted your inquiry and Alperen will get back to you personally regarding this matter."
+
+    # Update memory
+    conversation_history.append(f"Recruiter: {original_query}")
+    conversation_history.append(f"Agent: {final_response}")
+    if len(conversation_history) > MAX_HISTORY * 2:
+        conversation_history = conversation_history[-(MAX_HISTORY * 2):]
+
+    # [Step 4: Final notification to Alperen]
+    tools.notify_user(f"Response sent to recruiter: {final_response}")
+
+    return {
+        "agent_response": final_response,
+        "evaluation_history": evaluation_log,
+        "attempts": attempts
+    }
