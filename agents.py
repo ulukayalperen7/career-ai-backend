@@ -2,16 +2,23 @@ import os
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO)
 
 # 1. Initialize the client
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-# 2. Load Alperen's profile once to use in prompts
-with open("profile.txt", "r", encoding="utf-8") as f:
-    PROFILE_CONTEXT = f.read()
+# 2. Load profile context with safe fallback (env var or empty string)
+profile_path = os.path.join(os.path.dirname(__file__), "profile.txt")
+try:
+    with open(profile_path, "r", encoding="utf-8") as f:
+        PROFILE_CONTEXT = f.read()
+except FileNotFoundError:
+    PROFILE_CONTEXT = os.getenv("PROFILE_TEXT", "")
+    logging.warning("profile.txt not found; using PROFILE_TEXT env var or empty profile.")
 
 def get_primary_response(user_message: str, history: list = None):
     """
