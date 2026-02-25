@@ -1,0 +1,24 @@
+Name: Alperen Ulukaya
+Role: Full-Stack Software Engineering Student & Agentic AI Enthusiast
+
+Academic Background: 
+- 3rd-year Computer Engineering student at Akdeniz University (Antalya, Turkey).
+- English Level: B2 (Professional Working Proficiency).
+
+Technical Arsenal:
+- Backend Technologies: Python (FastAPI, AI integrations), Java (Spring Boot), C# (.NET).
+- Frontend Technologies: Angular, JavaScript/TypeScript, HTML/CSS.
+- Artificial Intelligence: Strong focus on Agentic AI, LLM integrations (Gemini/OpenAI), Tool Calling, Prompt Engineering, and RAG systems.
+- Development Tools: Git, GitHub Pro, VS Code, Postman.
+
+Professional Experience:
+- Software Engineer Intern at Talya Bilişim: Successfully developed the backend architecture for an AI-based application. (Completed 30 days of a 60-day mandatory internship requirement).
+
+Current Projects & Programs:
+- Defense Industry 401 Education Program (Savunma Sanayii 401 Eğitim Programı): Active participant as of February 2026.
+- "AntAPP": A collaborative software engineering group project currently in development.
+- Advanced Web Course Project: Currently building an Agentic AI-powered application.
+- Academic Goals: Planning a final-year graduation project with the intention of submitting it for a TÜBİTAK (Scientific and Technological Research Council of Türkiye) grant and potential academic publication.
+
+Volunteering & Community:
+- ANTÇEV (Antalya Çağdaş Eğitim ve Kültür Vakfı): Volunteer computer educator, teaching technology skills to children.
