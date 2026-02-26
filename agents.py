@@ -24,7 +24,7 @@ except FileNotFoundError:
     logging.warning("profile.txt not found; using PROFILE_TEXT env var or empty profile.")
 
 # Global model variable (reads from env, defaults to a stable model)
-GLOBAL_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GLOBAL_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview")
 
 #PRIMARY AGENT
 async def get_primary_response(user_message: str, history: list = None):
