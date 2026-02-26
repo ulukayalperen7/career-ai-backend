@@ -1,4 +1,5 @@
 import os
+import asyncio
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -22,11 +23,11 @@ except FileNotFoundError:
     PROFILE_CONTEXT = os.getenv("PROFILE_TEXT", "")
     logging.warning("profile.txt not found; using PROFILE_TEXT env var or empty profile.")
 
-# Global model variable (reads from env, defaults to the working preview model)
-GLOBAL_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
+# Global model variable (reads from env, defaults to a stable model)
+GLOBAL_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
 #PRIMARY AGENT
-def get_primary_response(user_message: str, history: list = None):
+async def get_primary_response(user_message: str, history: list = None):
     """
     Primary Agent (Career Agent): Generates the first draft of the response.
     """
@@ -66,15 +67,27 @@ def get_primary_response(user_message: str, history: list = None):
     {PROFILE_CONTEXT}
     """
 
+    # MEMORY OPTIMIZATION:
+    # Truncate history if it gets too long to save context window
+    truncated_history = history[-6:] if history and len(history) > 6 else history
+
     # Memory Implementation: Include history if provided
     chat_context = ""
-    if history:
-        chat_context = "Previous Conversation:\n" + "\n".join(history) + "\n\n"
+    if truncated_history:
+        # Format history for the model
+        chat_context = "Previous Conversation:\n"
+        for turn in truncated_history:
+            chat_context += f"{turn['role']}: {turn['content']}\n"
+        chat_context += "\n"
         
     full_message = chat_context + "Current Message: " + user_message
     
     try:
-        response = client.models.generate_content(
+        # Use simple synchronous call wrapped in asyncio.to_thread if async client isn't available/setup
+        # Or if the SDK supports it, use client.aio.models.generate_content
+        # For safety/compatibility with this specific SDK version, we'll offload the sync call.
+        response = await asyncio.to_thread(
+            client.models.generate_content,
             model=GLOBAL_GEMINI_MODEL,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -85,14 +98,11 @@ def get_primary_response(user_message: str, history: list = None):
         return response.text
     except Exception as e:
         logging.error(f"Primary Agent Error: {e}")
-        # If rate limited, notify you and return a clean fallback to the user
-        if "429" in str(e) or "503" in str(e):
-            notify_user(f"Rate limit hit on {GLOBAL_GEMINI_MODEL}. User message: {user_message}")
-            return "I am currently experiencing high traffic. Please try again in a few minutes."
-        return "An unexpected error occurred. Please try again later."
+        # Re-raise the exception to be handled by the main loop
+        raise e
 
 
-def evaluate_response(original_query: str, proposed_response: str):
+async def evaluate_response(original_query: str, proposed_response: str):
     """
     Response Evaluator (Critic Agent): Scores the response.
     """
@@ -100,19 +110,25 @@ def evaluate_response(original_query: str, proposed_response: str):
     Evaluate the following AI-generated response based on these criteria:
     1. Professional Tone (1-10)
     2. Accuracy (1-10)
-    3. Safety (No false claims) (1-10)
-    
-    Original Recruiter Query: {original_query}
-    Proposed Response: {proposed_response}
-    
-    Return your evaluation in JSON format with exactly two keys: 'score' (integer average) and 'feedback' (string).
+    3. Completeness: Does it answer the user's immediate question or ask a relevant clarifying question?
+
+    Response to Evaluate: "{proposed_response}"
+    User Query: "{original_query}"
+
+    Output ONLY standard JSON validation format:
+    {{
+      "score": <0-10>,
+      "feedback": "<short constructive feedback>",
+      "needs_improvement": <true/false>
+    }}
     """
     
     try:
-        response = client.models.generate_content(
+        response = await asyncio.to_thread(
+            client.models.generate_content,
             model=GLOBAL_GEMINI_MODEL,
             config=types.GenerateContentConfig(
-                temperature=0.1,
+                temperature=0.2, # Lower temperature for evaluation
                 response_mime_type="application/json"
             ),
             contents=eval_prompt
@@ -120,5 +136,5 @@ def evaluate_response(original_query: str, proposed_response: str):
         return response.text
     except Exception as e:
         logging.error(f"Critic Agent Error: {e}")
-        # If critic fails due to rate limit, we bypass it gracefully so the user still gets the primary response
-        return '{"score": 10, "feedback": "Critic bypassed due to high traffic."}'
+        # Re-raise the exception
+        raise e
