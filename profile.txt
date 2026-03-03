@@ -1,5 +1,5 @@
 Name: Alperen Ulukaya
-Role: Full-Stack Software Engineer & AI Agent Architect
+Role: Progressing as a Full-Stack Developer & AI Agent Architect
 
 Public summary:
 - 3rd-year Computer Engineering student. Focused on backend architecture, clean code, scalability, and agentic AI engineering.

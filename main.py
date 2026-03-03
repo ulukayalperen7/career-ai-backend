@@ -80,11 +80,7 @@ async def run_agent_system(request: ChatRequest):
             tools.notify_user(f"System Requested Human Intervention. Query: {original_query}")
             tools.record_unknown_question(original_query)
             
-            # Detect language (simple heuristic)
-            if any(char in original_query.lower() for char in ['ü', 'ğ', 'ş', 'ı', 'ö', 'ç', 'merhaba', 'nasıl']):
-                final_response = "Talebini not ettim. Alperen bu konuda seninle bizzat iletişime geçecek."
-            else:
-                final_response = "I have noted your inquiry and Alperen will get back to you personally regarding this matter."
+            final_response = "I have noted your inquiry and Alperen will get back to you personally regarding this matter."
 
         # Update History
         sessions[session_id]["history"].append({"role": "user", "content": original_query})
@@ -96,11 +92,7 @@ async def run_agent_system(request: ChatRequest):
         # Global error handler for the chat endpoint
         print(f"CRITICAL ERROR: {str(e)}")
         
-        error_response = "Sistem uyanıyor..."
-        # Attempt to reply in English if appropriate
-        if not any(char in original_query.lower() for char in ['ü', 'ğ', 'ş', 'ı', 'ö', 'ç', 'merhaba', 'nasıl']):
-            error_response = "System is waking up..."
-             
+        error_response = "An error occurred while generating the response. Please try again later."
         return ChatResponse(response=error_response, session_id=session_id)
 
 @app.on_event("startup")
