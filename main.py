@@ -6,6 +6,8 @@ import tools
 import json
 import uuid
 import time
+import os
+import logging
 from typing import List, Dict, Optional
 
 app = FastAPI(title="Career Assistant Agentic System")
@@ -62,67 +64,27 @@ async def run_agent_system(request: ChatRequest):
 
     # Only notify on critical keywords or very first message of a NEW session
     # We ignore the initial "Hello" handshake from the frontend for notifications to avoid spam
-    if len(history) == 0 and user_query is not "Hello":
+    if len(history) == 0 and user_query != "Hello":
         tools.notify_user(f"New Visitor Session ({session_id[:8]}). Message: {user_query}")
     elif "[NEEDS_HUMAN]" in user_query: # Check if user is urgently asking for human? Unlikely, but good to have hooks.
         tools.notify_user(f"Urgent User Message: {user_query}")
     
     try:
-        done = False
-        attempts = 0
-        max_attempts = 2 # Reduced from 3 to improve latency
-        final_response = ""
         original_query = user_query
 
-        # If this is the initial handshake "Hello" from logic, just pass it through 
-        # but don't overthink it in the loop
+        # 1. Primary Agent generates response directly
+        final_response = await agents.get_primary_response(user_query, history=history)
         
-        while not done and attempts < max_attempts:
-            attempts += 1
+        # Check if human intervention is requested by the model
+        if "[NEEDS_HUMAN]" in final_response:
+            tools.notify_user(f"System Requested Human Intervention. Query: {original_query}")
+            tools.record_unknown_question(original_query)
             
-            # 1. Primary Agent generates a draft
-            draft = await agents.get_primary_response(user_query, history=history)
-            
-            # Check if human intervention is requested by the model
-            if "[NEEDS_HUMAN]" in draft:
-                tools.notify_user(f"System Requested Human Intervention. Query: {original_query}")
-                tools.record_unknown_question(original_query)
-                
-                # Detect language (simple heuristic)
-                if any(char in original_query.lower() for char in ['ü', 'ğ', 'ş', 'ı', 'ö', 'ç', 'merhaba', 'nasıl']):
-                        final_response = "Talebini not ettim. Alperen bu konuda seninle bizzat iletişime geçecek."
-                else:
-                        final_response = "I have noted your inquiry and Alperen will get back to you personally regarding this matter."
-                
-                done = True
-                break
-                
-            # 2. Critic Agent evaluates the draft
-            # Only run critic if the draft is substantial, strictly speaking user might wait too long
-            # For this version, we will trust the primary agent more, or use a faster critic.
-            evaluation_raw = await agents.evaluate_response(original_query, draft)
-
-            # Parse the evaluation
-            try:
-                # Clean up json markdown if present
-                cleaned_eval = evaluation_raw.replace("```json", "").replace("```", "").strip()
-                evaluation = json.loads(cleaned_eval)
-            except json.JSONDecodeError:
-                # If critic fails to output JSON, trust the primary agent
-                final_response = draft
-                done = True
-                break
-
-            if evaluation.get("score", 0) >= 8:
-                final_response = draft
-                done = True
+            # Detect language (simple heuristic)
+            if any(char in original_query.lower() for char in ['ü', 'ğ', 'ş', 'ı', 'ö', 'ç', 'merhaba', 'nasıl']):
+                final_response = "Talebini not ettim. Alperen bu konuda seninle bizzat iletişime geçecek."
             else:
-                # Feedback loop: Update query with feedback for the next attempt
-                user_query = f"Original Query: {original_query}\nFeedback from previous attempt: {evaluation.get('feedback')}\nImprove the response."
-        
-        # Fallback if loop finishes without high score
-        if not final_response:
-            final_response = draft # Use the last draft anyway
+                final_response = "I have noted your inquiry and Alperen will get back to you personally regarding this matter."
 
         # Update History
         sessions[session_id]["history"].append({"role": "user", "content": original_query})
@@ -133,9 +95,18 @@ async def run_agent_system(request: ChatRequest):
     except Exception as e:
         # Global error handler for the chat endpoint
         print(f"CRITICAL ERROR: {str(e)}")
-        error_response = "I'm experiencing a temporary connection issue. Please try again in a moment."
-        # Attempt to reply in Turkish if appropriate
-        if any(char in original_query.lower() for char in ['ü', 'ğ', 'ş', 'ı', 'ö', 'ç', 'merhaba']):
-             error_response = "Geçici bir bağlantı sorunu yaşıyorum. Lütfen biraz sonra tekrar deneyin."
+        
+        error_response = "Sistem uyanıyor..."
+        # Attempt to reply in English if appropriate
+        if not any(char in original_query.lower() for char in ['ü', 'ğ', 'ş', 'ı', 'ö', 'ç', 'merhaba', 'nasıl']):
+            error_response = "System is waking up..."
              
         return ChatResponse(response=error_response, session_id=session_id)
+
+@app.on_event("startup")
+async def startup_event():
+    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    logging.info(f"--- Starting Career AI Assistant ---")
+    logging.info(f"Model: {model}")
+    logging.info(f"API Key: Loaded ({'Yes' if os.getenv('GEMINI_API_KEY') else 'No'})")
+    logging.info(f"Pushover: {'Enabled' if os.getenv('PUSHOVER_USER') else 'Disabled'}")

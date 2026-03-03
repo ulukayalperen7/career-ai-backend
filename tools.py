@@ -17,36 +17,48 @@ It implements the Notification and Alert mechanisms.
 
 def notify_user(message: str) -> str:
     """
-    Sends a real push notification to Alperen via Pushover API.
-    Attempts to be non-blocking if called from async context by using a thread, 
-    but strictly this is a synchronous function.
+    Sends a real push notification to Alperen via Telegram Bot API (or Pushover as fallback).
     """
-    # Fetching credentials from .env for security
-    user_key = os.getenv("PUSHOVER_USER")
-    token = os.getenv("PUSHOVER_TOKEN")
-    url = "https://api.pushover.net/1/messages.json"
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    
+    pushover_user = os.getenv("PUSHOVER_USER")
+    pushover_token = os.getenv("PUSHOVER_TOKEN")
 
-    if not user_key or not token:
-        # Fallback if keys are missing
+    if bot_token and chat_id:
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": f"🤖 Career AI Assistant:\n\n{message}"
+        }
+        try:
+            response = requests.post(url, json=payload, timeout=5)
+            response.raise_for_status()
+            return json.dumps({"status": "success", "response": "Notification pushed via Telegram."})
+        except Exception as e:
+            logging.error(f"Telegram Notification failed: {e}")
+            return json.dumps({"status": "failed", "error": str(e)})
+            
+    elif pushover_user and pushover_token:
+        # Legacy Pushover Support
+        url = "https://api.pushover.net/1/messages.json"
+        payload = {
+            "user": pushover_user,
+            "token": pushover_token,
+            "message": message,
+            "title": "Career AI Assistant"
+        }
+        try:
+            response = requests.post(url, data=payload, timeout=5)
+            response.raise_for_status()
+            return json.dumps({"status": "success", "response": "Notification pushed via Pushover."})
+        except Exception as e:
+            logging.error(f"Pushover Notification failed: {e}")
+            return json.dumps({"status": "failed", "error": str(e)})
+
+    else:
         logging.warning(f"Notification keys missing. Content: {message}")
         return json.dumps({"status": "error", "reason": "API keys not found"})
-
-    payload = {
-        "user": user_key,
-        "token": token,
-        "message": message,
-        "title": "Career AI Assistant"
-    }
-
-    try:
-        # Making the actual API call to Pushover
-        # Use a short timeout to prevent hanging
-        response = requests.post(url, data=payload, timeout=5)
-        response.raise_for_status()
-        return json.dumps({"status": "success", "response": "Notification pushed to mobile."})
-    except Exception as e:
-        logging.error(f"Notification failed: {e}")
-        return json.dumps({"status": "failed", "error": str(e)})
 
 
 def record_unknown_question(question: str) -> str:

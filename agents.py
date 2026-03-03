@@ -24,7 +24,7 @@ except FileNotFoundError:
     logging.warning("profile.txt not found; using PROFILE_TEXT env var or empty profile.")
 
 # Global model variable (reads from env, defaults to a stable model)
-GLOBAL_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview")
+GLOBAL_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 #PRIMARY AGENT
 async def get_primary_response(user_message: str, history: list = None):
@@ -101,40 +101,3 @@ async def get_primary_response(user_message: str, history: list = None):
         # Re-raise the exception to be handled by the main loop
         raise e
 
-
-async def evaluate_response(original_query: str, proposed_response: str):
-    """
-    Response Evaluator (Critic Agent): Scores the response.
-    """
-    eval_prompt = f"""
-    Evaluate the following AI-generated response based on these criteria:
-    1. Professional Tone (1-10)
-    2. Accuracy (1-10)
-    3. Completeness: Does it answer the user's immediate question or ask a relevant clarifying question?
-
-    Response to Evaluate: "{proposed_response}"
-    User Query: "{original_query}"
-
-    Output ONLY standard JSON validation format:
-    {{
-      "score": <0-10>,
-      "feedback": "<short constructive feedback>",
-      "needs_improvement": <true/false>
-    }}
-    """
-    
-    try:
-        response = await asyncio.to_thread(
-            client.models.generate_content,
-            model=GLOBAL_GEMINI_MODEL,
-            config=types.GenerateContentConfig(
-                temperature=0.2, # Lower temperature for evaluation
-                response_mime_type="application/json"
-            ),
-            contents=eval_prompt
-        )
-        return response.text
-    except Exception as e:
-        logging.error(f"Critic Agent Error: {e}")
-        # Re-raise the exception
-        raise e
