@@ -17,13 +17,10 @@ It implements the Notification and Alert mechanisms.
 
 def notify_user(message: str) -> str:
     """
-    Sends a real push notification to Alperen via Telegram Bot API (or Pushover as fallback).
+    Sends a real push notification to Alperen via Telegram Bot API.
     """
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    
-    pushover_user = os.getenv("PUSHOVER_USER")
-    pushover_token = os.getenv("PUSHOVER_TOKEN")
 
     if bot_token and chat_id:
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
@@ -38,26 +35,8 @@ def notify_user(message: str) -> str:
         except Exception as e:
             logging.error(f"Telegram Notification failed: {e}")
             return json.dumps({"status": "failed", "error": str(e)})
-            
-    elif pushover_user and pushover_token:
-        # Legacy Pushover Support
-        url = "https://api.pushover.net/1/messages.json"
-        payload = {
-            "user": pushover_user,
-            "token": pushover_token,
-            "message": message,
-            "title": "Career AI Assistant"
-        }
-        try:
-            response = requests.post(url, data=payload, timeout=5)
-            response.raise_for_status()
-            return json.dumps({"status": "success", "response": "Notification pushed via Pushover."})
-        except Exception as e:
-            logging.error(f"Pushover Notification failed: {e}")
-            return json.dumps({"status": "failed", "error": str(e)})
-
     else:
-        logging.warning(f"Notification keys missing. Content: {message}")
+        logging.warning(f"Telegram keys missing. Cannot send notification. Content: {message}")
         return json.dumps({"status": "error", "reason": "API keys not found"})
 
 

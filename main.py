@@ -77,10 +77,13 @@ async def run_agent_system(request: ChatRequest):
         
         # Check if human intervention is requested by the model
         if "[NEEDS_HUMAN]" in final_response:
-            tools.notify_user(f"System Requested Human Intervention. Query: {original_query}")
+            tools.notify_user(f"⚠️ Yeni İletişim Talebi / İnsan Müdahalesi!\n\nKullanıcının Mesajı:\n{original_query}")
             tools.record_unknown_question(original_query)
             
-            final_response = "I have noted your inquiry and Alperen will get back to you personally regarding this matter."
+            # The agent creates a polite sign-off message directly, so we just remove the tag
+            final_response = final_response.replace("[NEEDS_HUMAN]", "").strip()
+            if not final_response:
+                final_response = "Teşekkürler, bilgilerinizi Alperen'e ilettim. Kendisi en kısa sürede e-posta üzerinden sizinle iletişime geçecektir."
 
         # Update History
         sessions[session_id]["history"].append({"role": "user", "content": original_query})
