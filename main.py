@@ -63,9 +63,10 @@ async def run_agent_system(request: ChatRequest):
     history = sessions[session_id]["history"]
 
     # Only notify on critical keywords or very first message of a NEW session
-    # We ignore the initial "Hello" handshake from the frontend for notifications to avoid spam
-    if len(history) == 0 and user_query != "Hello":
-        tools.notify_user(f"New Visitor Session ({session_id[:8]}). Message: {user_query}")
+    # We ignore the initial automatic messages from the frontend for notifications to avoid spam
+    ignored_auto_messages = ["hello", "hi", "wake up", "start", "sistem uyanıyor"]
+    if len(history) == 0 and user_query.strip().lower() not in ignored_auto_messages:
+        tools.notify_user(f"New Visitor Started a Chat ({session_id[:8]}). First Message: {user_query}")
     elif "[NEEDS_HUMAN]" in user_query: # Check if user is urgently asking for human? Unlikely, but good to have hooks.
         tools.notify_user(f"Urgent User Message: {user_query}")
     
